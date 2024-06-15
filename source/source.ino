@@ -15,6 +15,7 @@ bool prevWaterBtn = HIGH;
 bool prevModeBtn = HIGH;
 float currentTemp, currentHumid;
 int currentGround;
+short watering = 0;
 
 DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -43,16 +44,16 @@ void loop(){
         }
 
         bool waterTrig = digitalRead(WATERBTN);     // check water button
-        if(waterTrig == LOW && prevWaterBtn == HIGH){
+        if(waterTrig == LOW && prevWaterBtn == HIGH && watering == 0){
             prevWaterBtn = LOW;
             waterPlant();                       // water the plant
         }
         else if(waterTrig == HIGH && prevWaterBtn == LOW){
             prevWaterBtn = HIGH;
         }
-        sendData(currentTemp, currentHumid); 
-        if(Serial.available() && Serial.read()) waterPlant();
-        while(currentGround < 15) waterPlant();
+        sendData(currentTemp, currentHumid, watering); 
+        if(Serial.available() && Serial.read() && watering == 0) waterPlant();
+        while(currentGround < 15 && watering == 0) waterPlant();
     }
     currentTemp = dht.readTemperature();     // get datas to show/send
     currentHumid = dht.readHumidity();
@@ -62,6 +63,7 @@ void loop(){
 }
 
 void waterPlant(){                          // water plant
+    watering = 1;
     lcd.clear();
     for(int i=0; i<5; i++){
         currentTemp = dht.readTemperature();     // get datas to show/send
@@ -78,10 +80,11 @@ void waterPlant(){                          // water plant
         unsigned long start = millis();
         while(millis() - start < 1000){
             digitalWrite(VALVE, HIGH);
-            sendData(currentTemp, currentHumid);
+            sendData(currentTemp, currentHumid, watering);
         }
     }
     digitalWrite(VALVE, LOW);
+    watering = 0;
 }
 
 int getGroundMoist(){                       // return ground moisture (0~100)
@@ -110,11 +113,11 @@ void displayMode(float temp, float humid, int ground){      // display data
     }
 }
 
-void sendData(float temp, float humid){     // send data
+void sendData(float temp, float humid, short isWatering){     // send data
     char buffer[10];                        // create buffer to make format
     char temp1[5], temp2[5];                // var to store data as str
     dtostrf(temp, 4, 1, temp1);             // change datatype float -> str
     dtostrf(humid, 4, 1, temp2);
-    sprintf(buffer, "%s C,%s %%", temp1, temp2); // build format
+    sprintf(buffer, "%s C,%s %%,%d!", temp1, temp2, isWatering); // build format
     Serial.println(buffer);                 // send data via serial
 }
