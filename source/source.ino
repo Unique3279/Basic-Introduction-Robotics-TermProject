@@ -8,7 +8,7 @@
 #define WATERBTN 2
 #define MODEBTN 3
 #define MOIST A1
-#define VALVE 5
+#define VALVE1 8
 
 bool state = true;
 bool prevWaterBtn = HIGH;
@@ -21,7 +21,7 @@ DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup(){
-    pinMode(VALVE, OUTPUT);
+    pinMode(VALVE1, OUTPUT);
     pinMode(WATERBTN, INPUT_PULLUP);
     pinMode(MODEBTN, INPUT_PULLUP);
 
@@ -79,11 +79,11 @@ void waterPlant(){                          // water plant
         lcd.print("%");
         unsigned long start = millis();
         while(millis() - start < 1000){
-            digitalWrite(VALVE, HIGH);
+            digitalWrite(VALVE1, HIGH);
             sendData(currentTemp, currentHumid, watering);
         }
     }
-    digitalWrite(VALVE, LOW);
+    digitalWrite(VALVE1, LOW);
     watering = 0;
 }
 
